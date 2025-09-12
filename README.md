@@ -1,6 +1,6 @@
 # SecurePipeline360
 
-A tiny Flask app that we'll use to build a **free DevSecOps CI/CD pipeline** with:
+A tiny Flask app that we'll use to build a free DevSecOps CI/CD pipeline with:
 - GitHub Actions
 - Trivy (container/dependency scanning)
 - Checkov (IaC scanning)
