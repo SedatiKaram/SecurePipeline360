@@ -1,5 +1,3 @@
-Set-Content -Path Dockerfile -Value @"
-# Pinned base image reduces OS CVEs (update version occasionally)
 FROM python:3.12.4-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -34,4 +32,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
   CMD curl --fail http://127.0.0.1:5000 || exit 1
 
 CMD ["python", "app.py"]
-"@
