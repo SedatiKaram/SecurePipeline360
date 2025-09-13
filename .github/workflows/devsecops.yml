@@ -34,7 +34,7 @@ jobs:
           output: 'trivy-fs.sarif'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
-          exit-code: '1'   # would fail, but we continue and gate later
+          exit-code: '1'   # mark failure, but don't stop job
 
       - name: Upload Trivy FS SARIF
         if: always()
@@ -79,7 +79,7 @@ jobs:
       # ---------- Checkov IaC ----------
       - id: checkov
         name: Checkov IaC scan
-        uses: bridgecrewio/checkov-action@v12  # pin to a release, not master
+        uses: bridgecrewio/checkov-action@v12   # pin a release, not master
         continue-on-error: true
         with:
           directory: .
@@ -108,11 +108,9 @@ jobs:
           echo "Trivy FS outcome:      ${{ steps.trivy_fs.outcome }}"
           echo "Trivy Image outcome:   ${{ steps.trivy_image.outcome }}"
           echo "Checkov outcome:       ${{ steps.checkov.outcome }}"
-
           for o in "${{ steps.trivy_fs.outcome }}" "${{ steps.trivy_image.outcome }}" "${{ steps.checkov.outcome }}"; do
             if [ "$o" = "failure" ]; then fail=1; fi
           done
-
           if [ $fail -ne 0 ]; then
             echo "One or more scanners reported HIGH/CRITICAL findings. Failing the job."
             exit 1
