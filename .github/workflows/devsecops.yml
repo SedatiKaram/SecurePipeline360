@@ -1,4 +1,4 @@
-name: SecurePipeline360 CI (Build + Security Scans)
+name: SecurePipeline360 CI
 
 on:
   push:
@@ -8,76 +8,67 @@ on:
 
 permissions:
   contents: read
-  security-events: write   # allow uploading SARIF to code scanning
+  security-events: write   # needed for SARIF uploads
+  actions: read
 
 jobs:
-  build-and-scan:
+  security-scans:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
+      # ---------- Build the Docker image with the SAME tag you'll scan ----------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        run: docker build -t securepipeline360:ci .
+      - name: Build image (must match image-ref below)
+        run: docker build -t securepipeline360:local .
 
-      # ---------- Trivy: scan the built image ----------
-      - name: Trivy (image) — detect critical/high CVEs and fail
-        uses: aquasecurity/trivy-action@0.24.0
-        with:
-          image-ref: securepipeline360:ci
-          format: sarif
-          output: trivy-image.sarif
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-          exit-code: '1'   # fail pipeline if CRITICAL/HIGH found
-
-      - name: Upload Trivy SARIF to code scanning
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: trivy-image.sarif
-
-      # ---------- Trivy: scan the repo filesystem ----------
-      - name: Trivy (fs) — scan dependencies in repo
+      # ---------- Trivy: Filesystem scan (repo + deps) ----------
+      - name: Trivy FS scan (repo)
         uses: aquasecurity/trivy-action@0.24.0
         with:
           scan-type: 'fs'
-          format: sarif
-          output: trivy-fs.sarif
-          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-fs.sarif'
           ignore-unfixed: true
-          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'        # set to '0' temporarily if you just want to preview
 
       - name: Upload Trivy FS SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-fs.sarif
 
-      # ---------- Checkov: IaC misconfigurations ----------
-      - name: Checkov — scan IaC (Terraform / K8s / Docker)
-        uses: bridgecrewio/checkov-action@v12
+      # ---------- Trivy: Image scan (the image we just built) ----------
+      - name: Trivy Image scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          scan-type: 'image'
+          image-ref: 'securepipeline360:local'  # must match the build tag above
+          format: 'sarif'
+          output: 'trivy-image.sarif'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'        # set to '0' to preview without failing
+
+      - name: Upload Trivy Image SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-image.sarif
+
+      # ---------- Checkov: IaC scan (Terraform/Kubernetes/Compose) ----------
+      - name: Checkov IaC scan
+        uses: bridgecrewio/checkov-action@master
         with:
           directory: .
           output_format: sarif
           output_file_path: checkov.sarif
-          soft_fail: false     # fail on failed checks (recommended)
-          framework: terraform,kubernetes,github_actions,dockerfile
+          quiet: true
 
       - name: Upload Checkov SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: checkov.sarif
-
-      # ---------- Keep HTML reports as artifacts (optional) ----------
-      - name: Archive SARIF artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: |
-            trivy-image.sarif
-            trivy-fs.sarif
-            checkov.sarif

@@ -1,3 +1,5 @@
+name: spnet
+
 services:
   web:
     image: securepipeline360:local
@@ -5,3 +7,9 @@ services:
     ports:
       - "5000:5000"
     restart: unless-stopped
+    networks:
+      - spnet
+
+networks:
+  spnet:
+    name: spnet
