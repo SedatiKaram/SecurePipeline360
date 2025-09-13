@@ -8,8 +8,7 @@ on:
 
 permissions:
   contents: read
-  security-events: write   # needed for SARIF uploads
-  actions: read
+  security-events: write
 
 jobs:
   security-scans:
@@ -19,14 +18,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---------- Build the Docker image with the SAME tag you'll scan ----------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build image (must match image-ref below)
+      # Build the image that will be scanned
+      - name: Build Docker image
         run: docker build -t securepipeline360:local .
 
-      # ---------- Trivy: Filesystem scan (repo + deps) ----------
+      # ---------- Trivy FS scan ----------
       - name: Trivy FS scan (repo)
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -37,21 +36,19 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
 
-      # Try Code Scanning upload (skip failure if disabled)
-      - name: Upload Trivy FS SARIF (to Code Scanning)
+      - name: Upload Trivy FS SARIF
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
           sarif_file: trivy-fs.sarif
 
-      # Always keep artifact as fallback
-      - name: Upload Trivy FS report (artifact)
+      - name: Upload Trivy FS artifact
         uses: actions/upload-artifact@v4
         with:
           name: trivy-fs.sarif
           path: trivy-fs.sarif
 
-      # ---------- Trivy: Image scan (the image we just built) ----------
+      # ---------- Trivy Image scan ----------
       - name: Trivy Image scan
         uses: aquasecurity/trivy-action@0.24.0
         with:
@@ -63,19 +60,19 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
 
-      - name: Upload Trivy Image SARIF (to Code Scanning)
+      - name: Upload Trivy Image SARIF
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
           sarif_file: trivy-image.sarif
 
-      - name: Upload Trivy Image report (artifact)
+      - name: Upload Trivy Image artifact
         uses: actions/upload-artifact@v4
         with:
           name: trivy-image.sarif
           path: trivy-image.sarif
 
-      # ---------- Checkov: IaC scan (Terraform/Kubernetes/Compose) ----------
+      # ---------- Checkov IaC scan ----------
       - name: Checkov IaC scan
         uses: bridgecrewio/checkov-action@master
         with:
@@ -84,15 +81,14 @@ jobs:
           output_file_path: checkov.sarif
           quiet: true
 
-      - name: Upload Checkov SARIF (to Code Scanning)
+      - name: Upload Checkov SARIF
         uses: github/codeql-action/upload-sarif@v3
         continue-on-error: true
         with:
           sarif_file: checkov.sarif
 
-      - name: Upload Checkov report (artifact)
+      - name: Upload Checkov artifact
         uses: actions/upload-artifact@v4
         with:
           name: checkov.sarif
           path: checkov.sarif
-
