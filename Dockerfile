@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+# Pinned base image reduces OS CVEs (update version occasionally)
+>>>>>>> rescue/local-changes
 FROM python:3.12.4-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
