@@ -7,3 +7,7 @@ A tiny Flask app that we'll use to build a free DevSecOps CI/CD pipeline with:
 - OWASP ZAP (DAST)
 
 We'll enforce build-gating so merges fail on critical vulns.
+
+
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\start-devsecops.ps1
