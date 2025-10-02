@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: securepipeline360
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: securepipeline360
+  template:
+    metadata:
+      labels:
+        app: securepipeline360
+    spec:
+      containers:
+      - name: app
+        image: securepipeline360:latest
+        ports:
+        - containerPort: 5000
