@@ -1,13 +1,18 @@
 # SecurePipeline360
 
-A tiny Flask app that we'll use to build a free DevSecOps CI/CD pipeline with:
-- GitHub Actions
-- Trivy (container/dependency scanning)
-- Checkov (IaC scanning)
-- OWASP ZAP (DAST)
+A demo **Cloud DevSecOps Pipeline** project built with **Flask (Python)**, **MySQL**, **Docker**, and **GitHub Actions**.  
+Includes automated security scanning with **Trivy**, **Checkov**, and **OWASP ZAP**.
 
-We'll enforce build-gating so merges fail on critical vulns.
+## Features
+- CI/CD pipeline with GitHub Actions
+- Containerized Flask app
+- IaC scanning (Terraform, Kubernetes)
+- Automated security gates
+- Example of DevSecOps best practices
 
-
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
-.\start-devsecops.ps1
+## Run locally
+```bash
+docker build -t securepipeline360 .
+docker run -p 5000:5000 securepipeline360
+```
+Visit [http://localhost:5000](http://localhost:5000)
